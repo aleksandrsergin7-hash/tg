@@ -332,21 +332,35 @@
 
         function showManagerMessage(message) {
             const error = document.getElementById('error');
-            const lines = message.split('\n');
+            
             let htmlMessage = '';
+            const lines = message.split('\n');
+            
             lines.forEach(line => {
-                if (line.includes('@')) {
-                    const telegramMatch = line.match(/(@[\w_]+)/);
-                    if (telegramMatch) {
-                        const telegramTag = telegramMatch[1];
-                        htmlMessage += line.replace(telegramTag, 
-                            `<span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Нажмите чтобы скопировать">
-                                ${telegramTag} 📋
-                            </span>`);
-                    } else htmlMessage += line;
-                } else htmlMessage += line;
-                htmlMessage += '<br>';
+                let processedLine = line;
+                
+                // Ищем строку с менеджером (формат: "📞 Ваш менеджер: Имя Фамилия")
+                const managerMatch = line.match(/📞 Ваш менеджер:\s*(.+)/);
+                if (managerMatch) {
+                    const managerName = managerMatch[1].trim();
+                    processedLine = `<strong>${line}</strong>`;
+                }
+                
+                // Ищем строку с Telegram тегом (формат: "💬 Telegram: @username")
+                const telegramMatch = line.match(/💬 Telegram:\s*(@[\w_]+)/);
+                if (telegramMatch) {
+                    const telegramTag = telegramMatch[1];
+                    processedLine = line.replace(
+                        telegramTag, 
+                        `<span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Нажмите чтобы скопировать">
+                            ${telegramTag} 📋
+                        </span>`
+                    );
+                }
+                
+                htmlMessage += processedLine + '<br>';
             });
+            
             error.innerHTML = htmlMessage;
             error.style.display = 'block';
         }
