@@ -1,0 +1,594 @@
+* { 
+  box-sizing: border-box; 
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --primary: #3498db;
+  --primary-hover: #2980b9;
+  --active: #2ecc71;
+  --text: #333;
+  --bg: #f5f7fa;
+  --container-bg: white;
+  --border: #e1e8ed;
+  --error: #e74c3c;
+  --error-bg: #fdf2f2;
+  --success: #27ae60;
+  --shadow: rgba(0,0,0,0.08);
+  --table-header: #f8fafc;
+  --table-even: #f9fafb;
+  --total-row: #f0f9ff;
+  --telegram-bg: #0088cc;
+  --telegram-hover: #0077b3;
+}
+
+[data-theme="dark"] {
+  --primary: #3498db;
+  --primary-hover: #2980b9;
+  --active: #2ecc71;
+  --text: #ecf0f1;
+  --bg: #1a1a1a;
+  --container-bg: #2d3436;
+  --border: #4b6584;
+  --error: #e74c3c;
+  --error-bg: #2c1a1a;
+  --success: #27ae60;
+  --shadow: rgba(0,0,0,0.3);
+  --table-header: #34495e;
+  --table-even: #2c3e50;
+  --total-row: #1e3799;
+  --telegram-bg: #0088cc;
+  --telegram-hover: #0077b3;
+}
+
+body {
+  font-family: 'Montserrat', Arial, sans-serif;
+  margin: 0;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--container-bg);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 30px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+h1 {
+  font-weight: 600;
+  font-size: 22px;
+  margin: 0;
+}
+
+.theme-toggle {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.telegram-close {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  display: none;
+}
+
+.telegram-close:hover {
+  background: #c0392b;
+}
+
+.subtitle {
+  text-align: center;
+  color: #7f8c8d;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 15px;
+  background: var(--container-bg);
+  color: var(--text);
+  transition: 0.3s;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+button {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 14px;
+  min-height: 50px;
+  transition: 0.3s;
+  opacity: 1;
+  min-width: 120px;
+}
+
+button:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+button.active {
+  background: var(--active);
+}
+
+.checkbox-group {
+  margin-top: 12px;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.checkbox-group input {
+  width: auto;
+  margin-right: 8px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  border: 4px solid rgba(52, 152, 219, 0.3);
+  border-left: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: none;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  text-align: center;
+  margin: 10px 0;
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 16px;
+  display: none;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(52, 152, 219, 0.3);
+  border-radius: 2px;
+  margin: 10px auto;
+  overflow: hidden;
+  display: none;
+}
+
+.progress {
+  width: 0%;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.error {
+  color: var(--text);
+  text-align: center;
+  margin: 16px 0;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px;
+  background: var(--error-bg);
+  border-radius: 8px;
+  border: 1px solid var(--error);
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+.telegram-tag {
+  background: var(--telegram-bg);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 0 2px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-block;
+  border: 1px solid transparent;
+}
+
+.telegram-tag:hover {
+  background: var(--telegram-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.telegram-tag:active {
+  transform: translateY(0);
+}
+
+.copy-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--success);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.copy-notification.show {
+  opacity: 1;
+}
+
+.results {
+  margin-top: 25px;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.results.show {
+  opacity: 1;
+  display: block;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--shadow);
+  margin-top: 16px;
+  border: 1px solid var(--border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--container-bg);
+  min-width: 500px;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 12px 10px;
+  text-align: center;
+  font-size: 13px;
+}
+
+th {
+  background: var(--table-header);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+  text-transform: uppercase;
+}
+
+tr:nth-child(even) {
+  background-color: var(--table-even);
+}
+
+.total-row {
+  font-weight: bold;
+  background-color: var(--total-row) !important;
+  color: var(--primary);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--container-bg);
+  padding: 25px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close:hover {
+  color: var(--text);
+}
+
+.section {
+  display: none;
+  margin-top: 20px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.4s ease;
+}
+
+.section.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.loading {
+  display: none;
+}
+
+.loading .spinner,
+.loading .loading-text,
+.loading .progress-bar {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .container { padding: 15px; }
+  h1 { font-size: 20px; }
+  .button-group { flex-direction: column; }
+  button { min-height: 45px; }
+  .modal-content { width: 95%; padding: 20px; }
+  th, td { padding: 10px 8px; font-size: 12px; }
+  .header { flex-direction: column; gap: 10px; }
+}
+
+@media (max-width: 480px) {
+  body { padding: 10px; }
+  .container { padding: 12px; border-radius: 12px; }
+  h1 { font-size: 18px; }
+  .subtitle { font-size: 13px; }
+  input, select { padding: 10px; font-size: 14px; }
+  button { padding: 12px; font-size: 14px; }
+  th, td { padding: 8px 6px; font-size: 11px; }
+}
+
+.telegram-mode .theme-toggle {
+  display: none;
+}
+
+.telegram-mode .header {
+  padding-top: 10px;
+}
+
+/* Специфические стили для состояний */
+#loading {
+  display: none;
+}
+
+#loading .spinner,
+#loading .loading-text,
+#loading .progress-bar {
+  display: block;
+}
+
+/* Анимации для плавных переходов */
+.container, body {
+  transition: all 0.3s ease;
+}
+
+/* Стили для таблицы результатов */
+.table-wrapper {
+  margin-top: 16px;
+}
+
+/* Улучшенные стили для кнопок в группах */
+.button-group button {
+  min-width: 120px;
+}
+
+/* Стили для чекбоксов */
+.checkbox-group input[type="checkbox"] {
+  transform: scale(1.2);
+  margin-right: 8px;
+}
+
+/* Стили для выпадающих списков */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+/* Стили для полей ввода при ошибке */
+input:invalid {
+  border-color: var(--error);
+}
+
+/* Стили для disabled состояний */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Стили для активных состояний */
+button.active {
+  box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+}
+
+/* Стили для hover состояний таблицы */
+tr:hover {
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+/* Стили для модального окна */
+.modal {
+  backdrop-filter: blur(5px);
+}
+
+/* Стили для уведомления о копировании */
+.copy-notification {
+  backdrop-filter: blur(10px);
+  background: rgba(39, 174, 96, 0.95);
+}
+
+/* Стили для прогресс-бара */
+.progress-bar {
+  background: rgba(52, 152, 219, 0.1);
+}
+
+.progress {
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Стили для спиннера */
+.spinner {
+  border-top-color: transparent;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Стили для Telegram тегов */
+.telegram-tag {
+  user-select: none;
+}
+
+.telegram-tag::after {
+  content: " 📋";
+  font-size: 12px;
+  margin-left: 2px;
+}
+
+/* Стили для адаптивности изображений */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Стили для фокуса доступности */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Стили для скроллбара */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
+}
+
+/* Стили для выделения текста */
+::selection {
+  background: rgba(52, 152, 219, 0.3);
+  color: var(--text);
+}
+
+/* Стили для печати */
+@media print {
+  .theme-toggle,
+  .telegram-close,
+  .button-group {
+    display: none !important;
+  }
+  
+  .container {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сверка активного времени, штуки, РДС</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body data-theme="light">
+    <div class="container">
+        <div class="header">
+            <h1>⏱️ Сверка активного времени, штуки, РДС</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
+            <button class="telegram-close" onclick="closeWebApp()" style="display:none;">✕ Закрыть</button>
+        </div>
+        
+        <p class="subtitle">Выберите тип отчета для поиска</p>
+
+        <div class="form-group">
+            <label for="phone">📱 Телефон / ID LO</label>
+            <input type="text" id="phone" placeholder="Например: 79123456789">
+        </div>
+
+        <div class="button-group">
+            <button id="rdsBtn" class="active" onclick="openRDS()">📊 РДС</button>
+            <button id="picksBtn" onclick="openPicks()">📦 ШТУКИ</button>
+            <button id="hoursBtn" onclick="openHours()">⏰ ЧАСЫ</button>
+            <button onclick="showInstructions()">ℹ️ Инструкция</button>
+        </div>
+
+        <!-- Секция РДС -->
+        <div id="rdsSection" class="section active">
+            <label>📅 Дата для поиска:</label>
+            <input type="date" id="rdsDate">
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="rdsFullInfo"> Полная информация</label>
+            </div>
+            <div class="button-group" style="margin-top:10px;">
+                <button onclick="searchRDSByDate()">По дню</button>
+                <button onclick="searchRDSCurrentMonth()">За месяц</button>
+            </div>
+        </div>
+
+        <!-- Секция ШТУКИ -->
+        <div id="picksSection" class="section">
+            <div class="button-group">
+                <button onclick="showPicksDay()">День</button>
+                <button onclick="showPicksWeek()">Неделя</button>
+                <button onclick="searchPicksCurrentMonth()">Месяц</button>
+            </div>
+            
+            <div id="picksDaySection" class="section active" style="margin-top:10px;">
+                <input type="date" id="picksDayDate">
+                <button onclick="searchPicksByDay()">По дню</button>
+            </div>
+            
+            <div id="picksWeekSection" class="section" style="margin-top:10px;">
+                <label>Выберите неделю:</label>
+                <select id="weekSelect">
+                    <option value="">-- Выберите неделю --</option>
+                </select>
+                <button onclick="searchPicksByWeek()" style="margin-top:10px;">Поиск за неделю</button>
+            </div>
+        </div>
+
+        <!-- Секция ЧАСЫ -->
+        <div id="hoursSection" class="section">
+            <label>📅 Дата для поиска:</label>
+            <input type="date" id="hoursDate">
+            <div class="button-group" style="margin-top:10px;">
+                <button onclick="searchHoursByDate()">По дню</button>
+                <button onclick="searchHoursCurrentMonth()">За месяц</button>
+            </div>
+        </div>
+
+        <!-- Индикатор загрузки -->
+        <div id="loading" style="display:none;">
+            <div class="spinner"></div>
+            <div class="loading-text">⏳ Загрузка…</div>
+            <div class="progress-bar">
+                <div class="progress"></div>
+            </div>
+        </div>
+
+        <!-- Сообщение об ошибке -->
+        <div id="error"></div>
+
+        <!-- Результаты -->
+        <div id="results">
+            <h3>📋 Результаты:</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr id="tableHeader"></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно инструкций -->
+    <div id="instructionsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeInstructions()">&times;</span>
+            <h3>ℹ️ Инструкция по использованию</h3>
+            <ul>
+                <li>Вводите телефон или ID LO в соответствующее поле</li>
+                <li><strong>РДС</strong>: поиск по ID, с возможностью получения полной или краткой информации</li>
+                <li><strong>ШТУКИ</strong>: поиск по ID и дате с фильтрацией по дням, неделям или месяцам</li>
+                <li><strong>ЧАСЫ</strong>: поиск по ID с отображением часов работы, бонусов и итоговой суммы</li>
+                <li>Используйте различные фильтры: день, неделя, месяц для уточнения периода поиска</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Уведомление о копировании -->
+    <div id="copyNotification" class="copy-notification">✅ Тег скопирован!</div>
+
+    <script>
+        // ========== КОНФИГУРАЦИЯ ==========
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzsFn23FTQQZKrb_pvwidgw7QXI3WUwIvoeR2PFEYHuFx5iHM6BiDAsVr9Xk9vgqg/exec';
+
+        // ========== TELEGRAM WEB APP ИНТЕГРАЦИЯ ==========
+        function initTelegramWebApp() {
+            if (window.Telegram && Telegram.WebApp) {
+                const tg = Telegram.WebApp;
+                
+                document.body.classList.add('telegram-mode');
+                document.querySelector('.telegram-close').style.display = 'block';
+                
+                tg.expand();
+                
+                if (tg.colorScheme === 'dark') {
+                    document.body.setAttribute('data-theme', 'dark');
+                }
+                
+                const user = tg.initDataUnsafe?.user;
+                if (user && user.phone_number) {
+                    document.getElementById('phone').value = user.phone_number;
+                }
+                
+                tg.BackButton.onClick(() => {
+                    tg.close();
+                });
+                
+                tg.BackButton.show();
+            }
+        }
+
+        function closeWebApp() {
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.close();
+            }
+        }
+
+        // ========== ТЕМНАЯ ТЕМА ==========
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            const themeBtn = document.querySelector('.theme-toggle');
+            themeBtn.textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            const themeBtn = document.querySelector('.theme-toggle');
+            themeBtn.textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+        }
+
+        // ========== КОПИРОВАНИЕ ТЕГА ==========
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopyNotification();
+                }).catch(err => {
+                    copyFallback(text);
+                });
+            } else {
+                copyFallback(text);
+            }
+        }
+
+        function copyFallback(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopyNotification();
+            } catch (err) {
+                alert('Не удалось скопировать тег. Скопируйте вручную: ' + text);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopyNotification() {
+            const notification = document.getElementById('copyNotification');
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // ========== УПРАВЛЕНИЕ СЕКЦИЯМИ ==========
+        let currentSection = 'rds';
+        let searchTimeout = null;
+
+        function setActiveButton(buttonId) {
+            document.getElementById('rdsBtn').classList.remove('active');
+            document.getElementById('picksBtn').classList.remove('active');
+            document.getElementById('hoursBtn').classList.remove('active');
+            document.getElementById(buttonId).classList.add('active');
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            setTimeout(() => {
+                document.getElementById(sectionId).classList.add('active');
+            }, 50);
+        }
+
+        function openRDS() {
+            currentSection = 'rds';
+            setActiveButton('rdsBtn');
+            showSection('rdsSection');
+            clearForm();
+        }
+
+        function openPicks() {
+            currentSection = 'picks';
+            setActiveButton('picksBtn');
+            showSection('picksSection');
+            showPicksDay();
+            clearForm();
+        }
+
+        function openHours() {
+            currentSection = 'hours';
+            setActiveButton('hoursBtn');
+            showSection('hoursSection');
+            clearForm();
+        }
+
+        function clearForm() {
+            document.getElementById('error').textContent = '';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('tableBody').innerHTML = '';
+        }
+
+        // ========== УПРАВЛЕНИЕ ШТУКАМИ ==========
+        function showPicksDay() {
+            document.getElementById('picksDaySection').classList.add('active');
+            document.getElementById('picksWeekSection').classList.remove('active');
+        }
+
+        function showPicksWeek() {
+            document.getElementById('picksDaySection').classList.remove('active');
+            document.getElementById('picksWeekSection').classList.add('active');
+            generateWeekOptions();
+        }
+
+        function generateWeekOptions() {
+            const select = document.getElementById('weekSelect');
+            select.innerHTML = '<option value="">-- Выберите неделю --</option>';
+            
+            const today = new Date();
+            const start = new Date(today);
+            start.setDate(today.getDate() - today.getDay() + 1);
+            
+            for(let i = -4; i <= 1; i++) {
+                const weekStart = new Date(start);
+                weekStart.setDate(start.getDate() + i * 7);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                
+                const option = document.createElement('option');
+                option.value = `${formatDate(weekStart)}_${formatDate(weekEnd)}`;
+                option.textContent = `${formatDDMMYY(weekStart)} — ${formatDDMMYY(weekEnd)}`;
+                select.appendChild(option);
+            }
+        }
+
+        function searchPicksByWeek() {
+            const phone = document.getElementById('phone').value.trim();
+            const weekValue = document.getElementById('weekSelect').value;
+            
+            if(!phone) {
+                showError('❌ Укажите ID LO');
+                return;
+            }
+            
+            if(!weekValue) {
+                showError('❌ Выберите неделю');
+                return;
+            }
+            
+            const [startDate, endDate] = weekValue.split('_');
+            performSearch(phone, startDate, null, 'picks', false, endDate);
+        }
+
+        // ========== ФОРМАТИРОВАНИЕ ДАТ ==========
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+
+        function formatDDMMYY(d) {
+            return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getFullYear()).slice(-2);
+        }
+
+        // ========== АНИМИРОВАННАЯ ЗАГРУЗКА ==========
+        function showLoading() {
+            const loading = document.getElementById('loading');
+            const progress = document.querySelector('.progress');
+            
+            loading.style.display = 'block';
+            document.querySelector('.loading-text').style.display = 'block';
+            document.querySelector('.spinner').style.display = 'block';
+            document.querySelector('.progress-bar').style.display = 'block';
+            
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 90) {
+                    clearInterval(interval);
+                } else {
+                    width += Math.random() * 10;
+                    progress.style.width = Math.min(width, 90) + '%';
+                }
+            }, 200);
+            
+            return interval;
+        }
+
+        function hideLoading(interval) {
+            clearInterval(interval);
+            
+            const progress = document.querySelector('.progress');
+            progress.style.width = '100%';
+            
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.querySelector('.loading-text').style.display = 'none';
+                document.querySelector('.spinner').style.display = 'none';
+                document.querySelector('.progress-bar').style.display = 'none';
+                progress.style.width = '0%';
+            }, 500);
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        // ========== ПОКАЗ СООБЩЕНИЯ С МЕНЕДЖЕРОМ ==========
+        function showManagerMessage(message) {
+            const error = document.getElementById('error');
+            
+            const lines = message.split('\n');
+            let htmlMessage = '';
+            
+            lines.forEach(line => {
+                if (line.includes('@')) {
+                    const telegramMatch = line.match(/(@[\w_]+)/);
+                    if (telegramMatch) {
+                        const telegramTag = telegramMatch[1];
+                        htmlMessage += line.replace(telegramTag, 
+                            `<span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Нажмите чтобы скопировать">
+                                ${telegramTag} 📋
+                            </span>`);
+                    } else {
+                        htmlMessage += line;
+                    }
+                } else {
+                    htmlMessage += line;
+                }
+                htmlMessage += '<br>';
+            });
+            
+            error.innerHTML = htmlMessage;
+            error.style.display = 'block';
+        }
+
+        // ========== DEBOUNCE ПОИСК ==========
+        document.getElementById('phone').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+        });
+
+        // ========== ОСНОВНАЯ ФУНКЦИЯ ПОИСКА ==========
+        function performSearch(phone, date, month, type, fullInfo, endDate = null) {
+            if(!phone) {
+                showError('❌ Укажите номер/ID');
+                return;
+            }
+            
+            hideError();
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+            
+            const progressInterval = showLoading();
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const params = new URLSearchParams();
+                params.append('phone', phone);
+                if (date) params.append('date', date);
+                if (month) params.append('month', month);
+                params.append('type', type);
+                params.append('fullInfo', fullInfo);
+                if (endDate) params.append('endDate', endDate);
+                
+                fetch(`${GAS_URL}?${params.toString()}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(resp => {
+                        hideLoading(progressInterval);
+                        buttons.forEach(b => b.disabled = false);
+                        
+                        if (resp.status === 'no_data') {
+                            showManagerMessage(resp.message);
+                        } else if (resp.status === 'success') {
+                            resp.reportType = type;
+                            resp.fullInfo = fullInfo;
+                            showResults(resp);
+                        } else {
+                            showError(resp.message || 'Произошла ошибка');
+                        }
+                        
+                        if (window.Telegram && Telegram.WebApp) {
+                            Telegram.WebApp.BackButton.show();
+                        }
+                    })
+                    .catch(err => {
+                        hideLoading(progressInterval);
+                        buttons.forEach(b => b.disabled = false);
+                        console.error('Fetch error:', err);
+                        showError('⚠️ Ошибка подключения. Проверьте интернет или попробуйте позже.');
+                    });
+            }, 500);
+        }
+
+        // ========== ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ ==========
+        function showResults(resp) {
+            const error = document.getElementById('error');
+            const results = document.getElementById('results');
+            const tbody = document.getElementById('tableBody');
+            const tableHeader = document.getElementById('tableHeader');
+            
+            tbody.innerHTML = '';
+            tableHeader.innerHTML = '';
+            error.textContent = '';
+            error.innerHTML = '';
+            
+            if(!resp || resp.status !== 'success' || !resp.data || !resp.data.length) {
+                if (resp && resp.status === 'no_data') {
+                    showManagerMessage(resp.message);
+                } else {
+                    showError('🔍 Данные не найдены');
+                }
+                results.style.display = 'none';
+                return;
+            }
+
+            const reportType = resp.reportType || currentSection;
+            const fullInfo = resp.fullInfo || false;
+
+            let headers = [];
+            let totalColumn = '';
+            let totalPiecesColumn = '';
+
+            switch(reportType) {
+                case 'picks':
+                    headers = ['Дата слота', 'ID', 'ФИО', 'Активное время', 'КЭФ', 'Итого', 'Итого штук', 'Дата выплаты'];
+                    totalColumn = 'total';
+                    totalPiecesColumn = 'totalPieces';
+                    break;
+                    
+                case 'hours':
+                    headers = ['Дата слота', 'ID', 'ФИО', 'Уровень', 'Часы', 'Бонус', 'Итого', 'Вид оплаты', 'Дата выплаты'];
+                    totalColumn = 'total';
+                    break;
+                    
+                case 'rds':
+                    if (fullInfo) {
+                        headers = ['Дата слота', 'ID', 'ФИО', 'Уровень', 'Часы', 'Факт', 'План', 'КЭФ', 'Бонус', 'Итого', 'Дата выплаты'];
+                    } else {
+                        headers = ['Дата слота', 'ID', 'ФИО', 'Уровень', 'Часы', 'КЭФ', 'Бонус', 'Итого', 'Дата выплаты'];
+                    }
+                    totalColumn = 'total';
+                    break;
+            }
+
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                tableHeader.appendChild(th);
+            });
+
+            let total = 0;
+            let totalPieces = 0;
+            
+            resp.data.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    let value = '—';
+                    
+                    switch(header) {
+                        case 'Дата слота': value = item.date || '—'; break;
+                        case 'ID': value = item.id || '—'; break;
+                        case 'ФИО': value = item.fullName || '—'; break;
+                        case 'Активное время': value = item.activeTime || '—'; break;
+                        case 'КЭФ': value = item.coef || '—'; break;
+                        case 'Итого': value = item.total || '—'; break;
+                        case 'Итого штук': value = item.totalPieces || '—'; break;
+                        case 'Дата выплаты': value = item.paymentDate || '—'; break;
+                        case 'Уровень': value = item.level || '—'; break;
+                        case 'Часы': value = item.hours || '—'; break;
+                        case 'Бонус': value = item.bonus || '—'; break;
+                        case 'Вид оплаты': value = item.paymentType || '—'; break;
+                        case 'Факт': value = item.fact || '—'; break;
+                        case 'План': value = item.plan || '—'; break;
+                    }
+                    
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+                
+                tbody.appendChild(tr);
+                
+                if (totalColumn && item[totalColumn]) {
+                    const numValue = parseFloat(String(item[totalColumn]).replace(',', '.'));
+                    total += isNaN(numValue) ? 0 : numValue;
+                }
+                
+                if (totalPiecesColumn && item[totalPiecesColumn]) {
+                    const numValue = parseFloat(String(item[totalPiecesColumn]).replace(',', '.'));
+                    totalPieces += isNaN(numValue) ? 0 : numValue;
+                }
+            });
+
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            
+            let totalLabel = 'Итого за период:';
+            let totalValue = total.toFixed(2);
+            
+            switch(reportType) {
+                case 'picks':
+                    totalLabel = `Всего: ${Math.round(totalPieces)} шт. / ${total.toFixed(2)}`;
+                    totalValue = '';
+                    break;
+                case 'hours':
+                    totalLabel = 'Всего часов:';
+                    break;
+                case 'rds':
+                    totalLabel = 'Общая сумма:';
+                    break;
+            }
+            
+            if (reportType === 'picks') {
+                totalRow.innerHTML = `
+                    <td colspan="${headers.length - 1}" style="text-align:right;">${totalLabel}</td>
+                    <td>${totalValue}</td>
+                `;
+            } else {
+                totalRow.innerHTML = `
+                    <td colspan="${headers.length - 1}" style="text-align:right;">${totalLabel}</td>
+                    <td>${totalValue}</td>
+                `;
+            }
+            
+            tbody.appendChild(totalRow);
+            
+            results.style.display = 'block';
+            setTimeout(() => {
+                results.classList.add('show');
+            }, 100);
+        }
+
+        // ========== ФУНКЦИИ ДЛЯ РДС ==========
+        function searchRDSByDate() {
+            const phone = document.getElementById('phone').value.trim();
+            const date = document.getElementById('rdsDate').value;
+            const fullInfo = document.getElementById('rdsFullInfo').checked;
+            
+            if(!phone) {
+                showError('❌ Укажите номер');
+                return;
+            }
+            
+            if(!date) {
+                showError('❌ Выберите дату');
+                return;
+            }
+            
+            performSearch(phone, date, null, 'rds', fullInfo);
+        }
+
+        function searchRDSCurrentMonth() {
+            const phone = document.getElementById('phone').value.trim();
+            const fullInfo = document.getElementById('rdsFullInfo').checked;
+            
+            if(!phone) {
+                showError('❌ Укажите номер');
+                return;
+            }
+            
+            const m = new Date().getMonth() + 1;
+            performSearch(phone, null, String(m), 'rds', fullInfo);
+        }
+
+        // ========== ФУНКЦИИ ДЛЯ ШТУК ==========
+        function searchPicksByDay() {
+            const phone = document.getElementById('phone').value.trim();
+            const date = document.getElementById('picksDayDate').value;
+            
+            if(!phone) {
+                showError('❌ Укажите ID LO');
+                return;
+            }
+            
+            if(!date) {
+                showError('❌ Выберите день');
+                return;
+            }
+            
+            performSearch(phone, date, null, 'picks', false);
+        }
+
+        function searchPicksCurrentMonth() {
+            const phone = document.getElementById('phone').value.trim();
+            
+            if(!phone) {
+                showError('❌ Укажите ID LO');
+                return;
+            }
+            
+            const m = new Date().getMonth() + 1;
+            performSearch(phone, null, String(m), 'picks', false);
+        }
+
+        // ========== ФУНКЦИИ ДЛЯ ЧАСОВ ==========
+        function searchHoursByDate() {
+            const phone = document.getElementById('phone').value.trim();
+            const date = document.getElementById('hoursDate').value;
+            
+            if(!phone) {
+                showError('❌ Укажите ID');
+                return;
+            }
+            
+            if(!date) {
+                showError('❌ Выберите дату');
+                return;
+            }
+            
+            performSearch(phone, date, null, 'hours', false);
+        }
+
+        function searchHoursCurrentMonth() {
+            const phone = document.getElementById('phone').value.trim();
+            
+            if(!phone) {
+                showError('❌ Укажите ID');
+                return;
+            }
+            
+            const m = new Date().getMonth() + 1;
+            performSearch(phone, null, String(m), 'hours', false);
+        }
+
+        // ========== МОДАЛЬНОЕ ОКНО ==========
+        function showInstructions() {
+            document.getElementById('instructionsModal').style.display = 'block';
+        }
+
+        function closeInstructions() {
+            document.getElementById('instructionsModal').style.display = 'none';
+        }
+
+        window.onclick = function(e) {
+            if(e.target === document.getElementById('instructionsModal')) {
+                closeInstructions();
+            }
+        }
+
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            initTelegramWebApp();
+            
+            if (!window.Telegram || !Telegram.WebApp) {
+                loadTheme();
+            }
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('rdsDate').value = today;
+            document.getElementById('picksDayDate').value = today;
+            document.getElementById('hoursDate').value = today;
+            
+            generateWeekOptions();
+        });
+    </script>
+</body>
+</html>
