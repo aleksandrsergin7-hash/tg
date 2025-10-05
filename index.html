@@ -121,9 +121,7 @@
 
     <script>
         // ========== КОНФИГУРАЦИЯ ==========
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbzsFn23FTQQZKrb_pvwidgw7QXI3WUwIvoeR2PFEYHuFx5iHM6BiDAsVr9Xk9vgqg/exec';
-const proxyUrl = `https://corsproxy.io/?${gasUrl}?${params.toString()}`;
-fetch(proxyUrl)
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwg00zQcAcvv_ujRwkmvYEKMFKXS1_F_TloYGgLKeycPOYtfU21q1G0-tXv9pdqXZx3/exec';
 
         // ========== TELEGRAM WEB APP ИНТЕГРАЦИЯ ==========
         function initTelegramWebApp() {
@@ -427,6 +425,7 @@ fetch(proxyUrl)
             
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
+                // Формируем параметры
                 const params = new URLSearchParams();
                 params.append('phone', phone);
                 if (date) params.append('date', date);
@@ -435,7 +434,10 @@ fetch(proxyUrl)
                 params.append('fullInfo', fullInfo);
                 if (endDate) params.append('endDate', endDate);
                 
-               fetch(`https://corsproxy.io/?${GAS_URL}?${params.toString()}`)
+                // Используем CORS proxy для обхода ограничений
+                const proxyUrl = `https://corsproxy.io/?${GAS_URL}?${params.toString()}`;
+                
+                fetch(proxyUrl)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
@@ -733,7 +735,4 @@ fetch(proxyUrl)
         });
     </script>
 </body>
-
 </html>
-
-
