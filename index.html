@@ -433,7 +433,7 @@
                 params.append('fullInfo', fullInfo);
                 if (endDate) params.append('endDate', endDate);
                 
-                fetch(`${GAS_URL}?${params.toString()}`)
+               fetch(`https://corsproxy.io/?${GAS_URL}?${params.toString()}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
@@ -733,3 +733,4 @@
 </body>
 
 </html>
+
