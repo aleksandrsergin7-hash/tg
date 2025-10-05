@@ -184,7 +184,7 @@
     <div id="copyNotification" class="copy-notification">✅ Тег скопирован!</div>
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyTuM7jLHp-47lfR5KAM0lauJ46QtjCTNUL1gOQp3se0DpHjD2OIVznu-dbtt2Osowl/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwg00zQcAcvv_ujRwkmvYEKMFKXS1_F_TloYGgLKeycPOYtfU21q1G0-tXv9pdqXZx3/exec';
         let currentSection = 'rds', searchTimeout = null;
 
         // Telegram Web App
@@ -330,48 +330,25 @@
             document.getElementById('error').style.display = 'none';
         }
 
-       function showManagerMessage(message) {
-    const error = document.getElementById('error');
-    
-    let htmlMessage = '';
-    const lines = message.split('\n');
-    let managerName = '';
-    
-    lines.forEach(line => {
-        let processedLine = line;
-        
-        // Ищем строку с менеджером и сохраняем имя
-        const managerMatch = line.match(/📞 Ваш менеджер:\s*(.+)/);
-        if (managerMatch) {
-            managerName = managerMatch[1].trim();
-            processedLine = `<strong>${line}</strong>`;
-        }
-        
-        // Ищем строку с Telegram тегом
-        const telegramMatch = line.match(/💬 Telegram:\s*(@[\w_]+)/);
-        if (telegramMatch && managerName) {
-            const telegramTag = telegramMatch[1];
-            processedLine = `💬 Telegram: <span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Нажмите чтобы скопировать">
-                ${telegramTag} 📋
-            </span>`;
-            
-            // Также добавляем копируемый тег к имени менеджера
-            const managerLineIndex = htmlMessage.lastIndexOf('<strong>');
-            if (managerLineIndex !== -1) {
-                htmlMessage = htmlMessage.replace(
-                    `<strong>📞 Ваш менеджер: ${managerName}</strong>`,
-                    `<strong>📞 Ваш менеджер: ${managerName}</strong>` +
-                    ` <span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Скопировать тег">${telegramTag} 📋</span>`
-                );
-            }
-        }
-        
-        htmlMessage += processedLine + '<br>';
-    });
-    
-    error.innerHTML = htmlMessage;
-    error.style.display = 'block';
-}
+        function showManagerMessage(message) {
+            const error = document.getElementById('error');
+            const lines = message.split('\n');
+            let htmlMessage = '';
+            lines.forEach(line => {
+                if (line.includes('@')) {
+                    const telegramMatch = line.match(/(@[\w_]+)/);
+                    if (telegramMatch) {
+                        const telegramTag = telegramMatch[1];
+                        htmlMessage += line.replace(telegramTag, 
+                            `<span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Нажмите чтобы скопировать">
+                                ${telegramTag} 📋
+                            </span>`);
+                    } else htmlMessage += line;
+                } else htmlMessage += line;
+                htmlMessage += '<br>';
+            });
+            error.innerHTML = htmlMessage;
+            error.style.display = 'block';
         }
 
         // Search functionality
@@ -630,5 +607,3 @@
     </script>
 </body>
 </html>
-
-
