@@ -184,7 +184,7 @@
     <div id="copyNotification" class="copy-notification">✅ Тег скопирован!</div>
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyK4xzX5o5IMtOX7I27OYDx6b0Tqih8wteXBeTk6Qh1WhsprrL067tpNaaikE_WcGOZ/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzOsp4VFJ3c1L_ieD_zbAcHnDi4giz0SRCkecivjeOTOOMU5xkpsFBQ2vtJnPFP1405/exec';
         let currentSection = 'rds', searchTimeout = null;
 
         // Telegram Web App
@@ -331,47 +331,32 @@
         }
 
         function showManagerMessage(message) {
-    const error = document.getElementById('error');
-    
-    let htmlMessage = '';
-    const lines = message.split('\n');
-    let managerName = '';
-    
-    lines.forEach(line => {
-        let processedLine = line;
-        
-        // Ищем строку с менеджером и сохраняем имя
-        const managerMatch = line.match(/📞 Ваш менеджер:\s*(.+)/);
-        if (managerMatch) {
-            managerName = managerMatch[1].trim();
-            processedLine = `<strong>${line}</strong>`;
-        }
-        
-        // Ищем строку с Telegram тегом
-        const telegramMatch = line.match(/💬 Telegram:\s*(@[\w_]+)/);
-        if (telegramMatch && managerName) {
-            const telegramTag = telegramMatch[1];
-            processedLine = `💬 Telegram: <span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Нажмите чтобы скопировать">
-                ${telegramTag} 📋
-            </span>`;
+            const error = document.getElementById('error');
             
-            // Также добавляем копируемый тег к имени менеджера
-            const managerLineIndex = htmlMessage.lastIndexOf('<strong>');
-            if (managerLineIndex !== -1) {
-                htmlMessage = htmlMessage.replace(
-                    `<strong>📞 Ваш менеджер: ${managerName}</strong>`,
-                    `<strong>📞 Ваш менеджер: ${managerName}</strong>` +
-                    ` <span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Скопировать тег">${telegramTag} 📋</span>`
-                );
-            }
-        }
-        
-        htmlMessage += processedLine + '<br>';
-    });
-    
-    error.innerHTML = htmlMessage;
-    error.style.display = 'block';
-}
+            let htmlMessage = '';
+            const lines = message.split('\n');
+            
+            lines.forEach(line => {
+                let processedLine = line;
+                
+                // Ищем строку с Telegram тегом
+                const telegramMatch = line.match(/💬 Telegram:\s*(@[\w_]+)/);
+                if (telegramMatch) {
+                    const telegramTag = telegramMatch[1];
+                    processedLine = `💬 Telegram: <span class="telegram-tag" onclick="copyToClipboard('${telegramTag}')" title="Нажмите чтобы скопировать">
+                        ${telegramTag} 📋
+                    </span>`;
+                }
+                // Остальные строки оставляем как есть
+                else {
+                    processedLine = line;
+                }
+                
+                htmlMessage += processedLine + '<br>';
+            });
+            
+            error.innerHTML = htmlMessage;
+            error.style.display = 'block';
         }
 
         // Search functionality
@@ -630,6 +615,3 @@
     </script>
 </body>
 </html>
-
-
-
