@@ -121,7 +121,9 @@
 
     <script>
         // ========== КОНФИГУРАЦИЯ ==========
-        const GAS_URL = 'https://corsproxy.io/?https://script.google.com/macros/s/AKfycbzsFn23FTQQZKrb_pvwidgw7QXI3WUwIvoeR2PFEYHuFx5iHM6BiDAsVr9Xk9vgqg/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbzsFn23FTQQZKrb_pvwidgw7QXI3WUwIvoeR2PFEYHuFx5iHM6BiDAsVr9Xk9vgqg/exec';
+const proxyUrl = `https://corsproxy.io/?${gasUrl}?${params.toString()}`;
+fetch(proxyUrl)
 
         // ========== TELEGRAM WEB APP ИНТЕГРАЦИЯ ==========
         function initTelegramWebApp() {
@@ -733,4 +735,5 @@
 </body>
 
 </html>
+
 
